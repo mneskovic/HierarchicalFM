@@ -1,0 +1,1 @@
+hisat,33624064,0m0.243shisat,data/ecoli.fa,33435648,0m0.252s

@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('genome', help='Name of genome input FASTA file (include .fa)')
+parser.add_argument('index', help="Name of index to use")
+parser.add_argument('queries', help="Name of query file (FASTA")
+args = parser.parse_args()
+
+# Useful commands
+"""
+awk '/^S/{print ">"$2"\n"$3}' cdbg.gfa1 | fold > cdbg.fa
+hisat2-build cdbg.fa ecoli
+hisat2 -f -x ecoli -U query.fa -S eg1.sam
+wgsim -e 0.05 ecoli.fa testr1.fq testr2.fq
+cat testr1.fq | awk '{if(NR%4==1) {printf(">%s\n",substr($0,2));} else if(NR%4==2) print;}' > queryecoli.fa
+"""
+
+if args.index == 'hisat':
+    os.system(f"""
+        mkdir index_temp ; 
+        cd index_temp ; 
+        mkdir temp ; 
+        cuttlefish build -s ../{args.genome} -t 4 -o cdbg -f 1 -w temp/ ; 
+        awk \'/^S/{{print ">"$2"\\n"$3}}\' cdbg.gfa1 | fold > cdbg.fa ; 
+        mkdir index ; 
+        hisat2-build cdbg.fa index/index ; 
+        du -s -k index > size.txt ; 
+        cd index ; 
+        {{ time hisat2 -f -x index -U ../../{args.queries} -S e1g.sam ; }} 2> time.txt
+        """)
+    with open('index_temp/index/time.txt', "r") as f:
+        lines =  f.readlines()
+        for line in lines:
+            sp = line.split()
+            if len(sp) > 0 and sp[0] == "real":
+                time = line.split()[1]
+    with open('index_temp/size.txt', "r") as f:
+        size = str(int(f.readlines()[0].split()[0]) * 1024)
+    with open('analytics.txt', 'a') as f:
+        f.write(args.index +',' + args.genome+ "," + str(size) + "," +time+"\n")
+
+os.system('rm -rf index_temp')
+
+
