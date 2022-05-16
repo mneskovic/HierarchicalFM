@@ -19,5 +19,6 @@ The index itself (set of index files) will be located in the index directory, wh
 This script runs an index given an input FASTA, index type, and query FASTA. It takes the given input FASTA, creates a CDBG for it, creates an index over the CDBG and then runs the given queries, then records the size of the index and time for index to run in the analytics.txt file. The script is purely for making it easier to gather data, so the index and related files are deleted with each run.
 
 ### Queries
-To generate a larger set of query reads, we used wgsim. The following command simulates 1 million reads with an error rate of 0.05, where output will be stored in the testr1.fq and testr2.fq files.
-- wgsim -e 0.05 ecoli.fa testr1.fq testr2.fq
+To generate a larger set of query reads, we used wgsim. The following commands simulates 1 million reads with an error rate of 0.05, where output will be stored in the testr1.fq and testr2.fq files, and converts the testr1.fq into a FASTA file.
+- `wgsim -e 0.05 ecoli.fa testr1.fq testr2.fq`
+- `cat testr1.fq | awk '{if(NR%4==1) {printf(">%s\n",substr($0,2));} else if(NR%4==2) print;}' > query.fa`
